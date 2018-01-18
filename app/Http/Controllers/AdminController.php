@@ -658,7 +658,7 @@ class AdminController extends Controller
     public function settingPin(Request $request)
     {
         $PIN = new \App\Pin_setting;
-        $this->setPageHeader('Setting PIN');
+        $this->setPageHeader('Setting PIN-A');
         if (!$this->user->isAdminAll()) return view('404');
         $setting = $PIN->getSetting();
         if ($request->isMethod('post')) {
@@ -681,6 +681,34 @@ class AdminController extends Controller
         }
 
         return view('admin.pin.setting')
+            ->with('data', $setting);
+    }
+    public function settingPinb(Request $request)
+    {
+        $PIN = new \App\Pin_settingb;
+        $this->setPageHeader('Setting PIN - B');
+        if (!$this->user->isAdminAll()) return view('404');
+        $setting = $PIN->getSetting();
+        if ($request->isMethod('post')) {
+            $id = $request->get('id');
+            $values = array(
+                'pin_type_name'                 => $request->get('pin_type_name', 0),
+                'business_rights_amount'        => $request->get('business_rights_amount', 0),
+                'pin_type_price'                => intval($request->get('pin_type_price', '0')),
+                'pin_type_stockis_price'        => intval($request->get('pin_type_stockis_price', '0')),
+                'pin_type_masterstockis_price'  => intval($request->get('pin_type_masterstockis_price', '0'))
+            );
+
+            if ($PIN->updateSetting($id, $values)) {
+                $pesan = $this->setPesanFlash('success', 'PIN Setting has been successfully saved.');
+                return redirect()->route('admin.pinb.setting')->with($pesan);
+            } else {
+                $pesan = $this->setPesanFlash('error', 'Failed to save Partner Setting.');
+                return redirect()->route('admin.pinb.setting')->with($pesan)->withInput();
+            }
+        }
+
+        return view('admin.pinb.setting')
             ->with('data', $setting);
     }
 
@@ -1020,6 +1048,32 @@ class AdminController extends Controller
         return $data->make();
     }
     
+	
+	
+	
+    public function getListActivationBPIN(){
+        $this->setPageHeader('Summary Activation B-PIN');
+        if (!$this->user->hasAccessRoute('admin.pinb.list')) return view('404');
+        return view('admin.pinb.list');
+    }
+    
+    public function getAjaxActivationBPIN(){
+        if (!$this->user->hasAccessRoute('admin.pinb.list')) return view('404');
+        $pin_member = new \App\PinMemberB;
+        $pinAll = $pin_member->getAllUsedPIN();
+        $data = Datatables::collection($pinAll);
+        if (!empty($data->collection)) {
+            $no = 0;
+            foreach ($data->collection as $row) {
+                $no++;
+                $row->no = $no;
+                $row->amount = number_format($row->amount, 0, ',', '.') .',-';
+            }
+        }
+        return $data->make();
+    }
+    
+	
     public function getListAllMembers(){
         $this->setPageHeader('All Member ');
         if (!$this->user->hasAccessRoute('admin.member.list')) return view('404');
